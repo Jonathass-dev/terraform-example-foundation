@@ -1,4 +1,4 @@
-// Copyright 2026 Google LLC
+// Copyright 2023 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,22 +21,21 @@ import (
 	"strings"
 )
 
-// disableFileSuffix marks a build-type file as inactive (e.g. build_cb.tf.example).
-const disableFileSuffix = ".example"
+const (
+	DisableFileSuffix = ".example"
+)
 
-// AllowedBuildTypes are the CI/CD variants supported by 0-bootstrap. This mirrors
-// helpers/foundation-deployer/utils/files.go and 0-bootstrap/scripts/choose_build_type.sh,
-// with "local" added so the integration tests can switch the bootstrap into the
-// no-CI/CD variant (no Cloud Source Repositories, no Cloud Build) before applying.
+// AllowedBuildTypes are the CI/CD variants supported by 0-bootstrap.
+// "local" is included so the integration tests can switch the bootstrap into
+// the no-CI/CD variant (no Cloud Source Repositories, no Cloud Build) before applying.
 var AllowedBuildTypes = []string{"cb", "github", "gitlab", "terraform_cloud", "local"}
 
 // CurrentBuildType returns the build type currently active in basePath, detected
 // by the active build_<type>.tf file (i.e. without the .example suffix). It returns
-// an empty string if no build type is active. Callers use it to record the original
-// state so it can be restored on teardown, keeping the checkout non-destructive.
+// an empty string if no build type is active.
 func CurrentBuildType(basePath string) (string, error) {
 	for _, bt := range AllowedBuildTypes {
-		active, err := fileExists(filepath.Join(basePath, fmt.Sprintf("build_%s.tf", bt)))
+		active, err := FileExists(filepath.Join(basePath, fmt.Sprintf("build_%s.tf", bt)))
 		if err != nil {
 			return "", err
 		}
@@ -48,64 +47,52 @@ func CurrentBuildType(basePath string) (string, error) {
 }
 
 // RenameBuildFiles activates the targetBuild variant in basePath and deactivates
-// every other variant, by renaming *_<type>.tf <-> *_<type>.tf.example. It is
-// idempotent (re-running with an already-active target is a no-op) and mirrors the
-// logic of 0-bootstrap/scripts/choose_build_type.sh. Base files without a
-// _<type> suffix (main.tf, sa.tf, variables.tf, outputs.tf, ...) are never touched.
-//
-// NOTE: this mutates the working tree at basePath. When used against the shared
-// ../../../0-bootstrap checkout, callers must restore the original build type on
-// teardown. An abrupt interruption (panic/kill) before teardown can leave the tree
-// switched, the same caveat as disable_tf_files.sh / restore_tf_files.sh.
+// every other variant, by renaming *_<type>.tf <-> *_<type>.tf.example.
 func RenameBuildFiles(basePath, targetBuild string) error {
-	if !isAllowedBuildType(targetBuild) {
-		return fmt.Errorf("invalid build type %q, must be one of: %s", targetBuild, strings.Join(AllowedBuildTypes, ", "))
+	validBuildType := false
+	for _, validType := range AllowedBuildTypes {
+		if targetBuild == validType {
+			validBuildType = true
+			break
+		}
+	}
+	if !validBuildType {
+		return fmt.Errorf("invalid build type '%s'. Must be one of: %s", targetBuild, strings.Join(AllowedBuildTypes, ", "))
 	}
 
-	// Deactivate all other build types: *_<type>.tf -> *_<type>.tf.example
-	for _, bt := range AllowedBuildTypes {
-		if bt == targetBuild {
+	for _, buildType := range AllowedBuildTypes {
+		if buildType == targetBuild {
 			continue
 		}
-		pattern := filepath.Join(basePath, fmt.Sprintf("*_%s.tf", bt))
+		pattern := filepath.Join(basePath, fmt.Sprintf("*_%s.tf", buildType))
 		files, err := filepath.Glob(pattern)
 		if err != nil {
-			return fmt.Errorf("finding files to deactivate for build type %q: %w", bt, err)
+			return fmt.Errorf("error finding files to deactivate for build type %s: %w", buildType, err)
 		}
 		for _, file := range files {
-			newName := file + disableFileSuffix
+			newName := file + DisableFileSuffix
 			if err := os.Rename(file, newName); err != nil {
-				return fmt.Errorf("deactivating %q: %w", file, err)
+				return fmt.Errorf("error renaming file %q: %w", file, err)
 			}
 		}
 	}
 
-	// Activate the target: *_<target>.tf.example -> *_<target>.tf
-	pattern := filepath.Join(basePath, fmt.Sprintf("*_%s.tf%s", targetBuild, disableFileSuffix))
+	pattern := filepath.Join(basePath, fmt.Sprintf("*_%s.tf%s", targetBuild, DisableFileSuffix))
 	files, err := filepath.Glob(pattern)
 	if err != nil {
-		return fmt.Errorf("finding files to activate for build type %q: %w", targetBuild, err)
+		return fmt.Errorf("error finding files to activate for build type %s: %w", targetBuild, err)
 	}
 	for _, file := range files {
-		newName := strings.TrimSuffix(file, disableFileSuffix)
+		newName := strings.TrimSuffix(file, DisableFileSuffix)
 		if err := os.Rename(file, newName); err != nil {
-			return fmt.Errorf("activating %q: %w", file, err)
+			return fmt.Errorf("error renaming file %q: %w", file, err)
 		}
 	}
 	return nil
 }
 
-func isAllowedBuildType(bt string) bool {
-	for _, v := range AllowedBuildTypes {
-		if v == bt {
-			return true
-		}
-	}
-	return false
-}
-
-// fileExists reports whether path exists.
-func fileExists(path string) (bool, error) {
+// FileExists reports whether path exists.
+func FileExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true, nil
