@@ -84,7 +84,7 @@ module "gcp_projects_state_bucket" {
 
 module "tf_source" {
   source  = "terraform-google-modules/bootstrap/google//modules/tf_cloudbuild_source"
-  version = "~> 12.0"
+  version = "~> 13.0"
 
   org_id                = var.org_id
   folder_id             = google_folder.bootstrap.id
@@ -166,7 +166,7 @@ module "tf_private_pool" {
 
 module "tf_cloud_builder" {
   source  = "terraform-google-modules/bootstrap/google//modules/tf_cloudbuild_builder"
-  version = "~> 12.0"
+  version = "~> 13.0"
 
   project_id                   = module.tf_source.cloudbuild_project_id
   dockerfile_repo_uri          = module.tf_source.csr_repos[local.cloudbuilder_repo].url
@@ -194,7 +194,7 @@ module "bootstrap_csr_repo" {
 }
 
 resource "time_sleep" "cloud_builder" {
-  create_duration = "30s"
+  create_duration = var.cloud_builder_sleep_duration
 
   depends_on = [
     module.tf_cloud_builder,
@@ -220,7 +220,7 @@ module "build_terraform_image" {
 
 module "tf_workspace" {
   source   = "terraform-google-modules/bootstrap/google//modules/tf_cloudbuild_workspace"
-  version  = "~> 12.0"
+  version  = "~> 13.0"
   for_each = local.granular_sa
 
   project_id                = module.tf_source.cloudbuild_project_id
@@ -278,5 +278,10 @@ resource "google_sourcerepo_repository_iam_member" "member" {
   role       = "roles/viewer"
   member     = "serviceAccount:${google_service_account.terraform-env-sa[each.key].email}"
 
+  depends_on = [module.tf_source]
+}
+
+data "google_project" "cloudbuild_project" {
+  project_id = module.tf_source.cloudbuild_project_id
   depends_on = [module.tf_source]
 }

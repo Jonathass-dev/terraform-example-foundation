@@ -15,7 +15,6 @@ On the other hand, the authentication infrastructure using [Workload identity fe
 To run the instructions described in this document, install the following:
 
 - [Google Cloud SDK](https://cloud.google.com/sdk/install) version 393.0.0 or later
-    - [terraform-tools](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) component
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) version 2.28.0 or later
 - [Terraform](https://www.terraform.io/downloads.html) version 1.5.7 or later
 - [jq](https://jqlang.github.io/jq/) version 1.6 or later.
@@ -250,21 +249,6 @@ export the GitLab personal or group access token as an environment variable:
    terraform plan -input=false -out bootstrap.tfplan
    ```
 
-1. To  validate your policies, run `gcloud beta terraform vet`. For installation instructions, see [Validate policies](https://cloud.google.com/docs/terraform/policy-validation/validate-policies) instructions for the Google Cloud CLI.
-
-1. Run the following commands and check for violations:
-
-   ```bash
-   export VET_PROJECT_ID=A-VALID-PROJECT-ID
-
-   terraform show -json bootstrap.tfplan > bootstrap.json
-   gcloud beta terraform vet bootstrap.json --policy-library="../../policy-library" --project ${VET_PROJECT_ID}
-   ```
-
-   *`A-VALID-PROJECT-ID`* must be an existing project you have access to. This is necessary because `gcloud beta terraform vet` needs to link resources to a valid Google Cloud Platform project.
-
-1. No violations and an output with `done` means the validation was successful.
-
 1. Run `terraform apply`.
 
    ```bash
@@ -293,6 +277,9 @@ export the GitLab personal or group access token as an environment variable:
    ```bash
    export backend_bucket=$(terraform output -raw gcs_bucket_tfstate)
    echo "backend_bucket = ${backend_bucket}"
+
+   export backend_bucket_projects=$(terraform output -raw projects_gcs_bucket_tfstate)
+   echo "backend_bucket_projects = ${backend_bucket_projects}"
 
    cp backend.tf.example backend.tf
    cd ../../../
@@ -556,12 +543,11 @@ or go to [Deploying step 3-networks-hub-and-spoke](#deploying-step-3-networks-hu
    chmod 755 ./*.sh
    ```
 
-1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, rename `production.auto.example.tfvars` to `production.auto.tfvars` and rename `access_context.auto.example.tfvars` to `access_context.auto.tfvars`.
+1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, and rename `production.auto.example.tfvars` to `production.auto.tfvars`.
 
    ```bash
    mv common.auto.example.tfvars common.auto.tfvars
    mv production.auto.example.tfvars production.auto.tfvars
-   mv access_context.auto.example.tfvars access_context.auto.tfvars
    ```
 
 1. Update the file `production.auto.tfvars` with the values for the `target_name_server_addresses`.
@@ -621,13 +607,6 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    ./tf-wrapper.sh plan shared
    ```
 
-1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
-1. Run `validate` and check for violations.
-
-   ```bash
-   ./tf-wrapper.sh validate shared $(pwd)/policy-library ${CICD_PROJECT_ID}
-   ```
-
 1. Run `apply` shared.
 
    ```bash
@@ -656,7 +635,7 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
 
    1. Push your production branch since development and nonproduction depends it.
 
-*Note:** The Production envrionment must be the first branch to be pushed as it includes the DNS Hub communication that will be used by other environments.
+*Note:** The Production environment must be the first branch to be pushed as it includes the DNS Hub communication that will be used by other environments.
 
    ```bash
    git add .
@@ -730,12 +709,11 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    chmod 755 ./*.sh
    ```
 
-1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, rename `shared.auto.example.tfvars` to `shared.auto.tfvars` and rename `access_context.auto.example.tfvars` to `access_context.auto.tfvars`.
+1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, and rename `shared.auto.example.tfvars` to `shared.auto.tfvars`.
 
    ```bash
    mv common.auto.example.tfvars common.auto.tfvars
    mv shared.auto.example.tfvars shared.auto.tfvars
-   mv access_context.auto.example.tfvars access_context.auto.tfvars
    ```
 
 1. Update `common.auto.tfvars` file with values from your GCP environment.
@@ -780,13 +758,6 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    ```bash
    ./tf-wrapper.sh init shared
    ./tf-wrapper.sh plan shared
-   ```
-
-1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
-1. Run `validate` and check for violations.
-
-   ```bash
-   ./tf-wrapper.sh validate shared $(pwd)/policy-library ${CICD_PROJECT_ID}
    ```
 
 1. Run `apply` shared.
@@ -932,13 +903,6 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    ```bash
    ./tf-wrapper.sh init shared
    ./tf-wrapper.sh plan shared
-   ```
-
-1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
-1. Run `validate` and check for violations.
-
-   ```bash
-   ./tf-wrapper.sh validate shared $(pwd)/policy-library ${CICD_PROJECT_ID}
    ```
 
 1. Run `apply` shared.

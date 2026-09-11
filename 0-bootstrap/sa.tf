@@ -28,7 +28,6 @@ locals {
   }
 
   common_roles = [
-    "roles/browser", // Required for gcloud beta terraform vet to be able to read the ancestry of folders
   ]
 
   granular_sa_org_level_roles = {
@@ -49,14 +48,18 @@ locals {
       "roles/resourcemanager.tagUser",
       "roles/cloudasset.owner",
       "roles/securitycenter.sourcesEditor",
+      "roles/serviceusage.serviceUsageConsumer",
     ], local.common_roles)),
     "env" = distinct(concat([
+      "roles/accesscontextmanager.policyAdmin",
       "roles/resourcemanager.tagUser",
       "roles/assuredworkloads.admin",
+      "roles/serviceusage.serviceUsageConsumer",
     ], local.common_roles)),
     "net" = distinct(concat([
       "roles/accesscontextmanager.policyAdmin",
       "roles/compute.xpnAdmin",
+      "roles/serviceusage.serviceUsageConsumer",
     ], local.common_roles)),
     "proj" = distinct(concat([
       "roles/accesscontextmanager.policyAdmin",
@@ -89,6 +92,7 @@ locals {
       "roles/artifactregistry.admin",
       "roles/compute.networkAdmin",
       "roles/compute.xpnAdmin",
+      "roles/iam.serviceAccountAdmin"
     ],
   }
 

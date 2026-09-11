@@ -77,15 +77,10 @@ func TestBootstrap(t *testing.T) {
 		"project_deletion_policy":          "DELETE",
 	}
 
-	temp := tft.NewTFBlueprintTest(t,
-		tft.WithTFDir("../../../0-bootstrap"),
-	)
-
 	bootstrap := tft.NewTFBlueprintTest(t,
 		tft.WithTFDir("../../../0-bootstrap"),
 		tft.WithVars(vars),
 		tft.WithRetryableTerraformErrors(testutils.RetryableTransientErrors, 1, 2*time.Minute),
-		tft.WithPolicyLibraryPath("/workspace/policy-library", temp.GetTFSetupStringOutput("project_id")),
 	)
 
 	cloudSourceRepos := []string{
@@ -203,7 +198,7 @@ func TestBootstrap(t *testing.T) {
 				peeredNetworkName := testutils.GetLastSplitElement(bootstrap.GetStringOutput("cloud_build_peered_network_id"), "/")
 				pool := gcloud.Runf(t, "builds worker-pools describe %s --region %s --project %s", workerPoolName, defaultRegion, cbProjectID)
 				assert.Equal(workerPoolName, pool.Get("name").String(), "pool %s should exist", workerPoolName)
-				assert.Equal("PUBLIC_EGRESS", pool.Get("privatePoolV1Config.networkConfig.egressOption").String(), "pool %s should have internet access", workerPoolName)
+				assert.Equal("NO_PUBLIC_EGRESS", pool.Get("privatePoolV1Config.networkConfig.egressOption").String(), "pool %s should not have public egress", workerPoolName)
 				assert.Equal("e2-medium", pool.Get("privatePoolV1Config.workerConfig.machineType").String(), "pool %s should have the configured machineType", workerPoolName)
 				assert.Equal("100", pool.Get("privatePoolV1Config.workerConfig.diskSizeGb").String(), "pool %s should have the configured disk size", workerPoolName)
 				assert.Equal(peeredNetworkName, testutils.GetLastSplitElement(pool.Get("privatePoolV1Config.networkConfig.peeredNetwork").String(), "/"), "pool %s should have peered network configured", workerPoolName)
@@ -292,7 +287,7 @@ func TestBootstrap(t *testing.T) {
 						"roles/accesscontextmanager.policyAdmin",
 						"roles/resourcemanager.organizationAdmin",
 						"roles/serviceusage.serviceUsageConsumer",
-						"roles/browser",
+						"roles/cloudkms.admin",
 					},
 				},
 				{
@@ -300,13 +295,16 @@ func TestBootstrap(t *testing.T) {
 					orgRoles: []string{
 						"roles/accesscontextmanager.policyAdmin",
 						"roles/compute.xpnAdmin",
-						"roles/browser",
+						"roles/serviceusage.serviceUsageConsumer",
 					},
 				},
 				{
 					output: "environment_step_terraform_service_account_email",
 					orgRoles: []string{
-						"roles/browser",
+						"roles/accesscontextmanager.policyAdmin",
+						"roles/assuredworkloads.admin",
+						"roles/resourcemanager.tagUser",
+						"roles/serviceusage.serviceUsageConsumer",
 					},
 				},
 				{
@@ -318,7 +316,12 @@ func TestBootstrap(t *testing.T) {
 						"roles/securitycenter.notificationConfigEditor",
 						"roles/resourcemanager.organizationViewer",
 						"roles/accesscontextmanager.policyAdmin",
-						"roles/browser",
+						"roles/essentialcontacts.admin",
+						"roles/resourcemanager.tagAdmin",
+						"roles/resourcemanager.tagUser",
+						"roles/cloudasset.owner",
+						"roles/securitycenter.sourcesEditor",
+						"roles/serviceusage.serviceUsageConsumer",
 					},
 				},
 				{
@@ -327,7 +330,6 @@ func TestBootstrap(t *testing.T) {
 						"roles/resourcemanager.organizationAdmin",
 						"roles/accesscontextmanager.policyAdmin",
 						"roles/serviceusage.serviceUsageConsumer",
-						"roles/browser",
 					},
 				},
 			} {

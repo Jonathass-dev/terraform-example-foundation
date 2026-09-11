@@ -43,12 +43,11 @@ func ValidateDirectories(g GlobalTFVars) error {
 	return nil
 }
 
-// ValidateComponents checks if gcloud Beta Components and Terraform Tools are installed
+// ValidateComponents checks if gcloud Beta Components is installed
 func ValidateComponents(t testing.TB) error {
 	gcpConf := gcp.NewGCP()
 	components := []string{
 		"beta",
-		"terraform-tools",
 	}
 	missing := []string{}
 	for _, c := range components {
@@ -146,6 +145,12 @@ func ValidateDestroyFlags(t testing.TB, g GlobalTFVars) {
 	}
 	if g.WorkflowDeletionProtection != nil && *g.WorkflowDeletionProtection {
 		falseFlags = append(falseFlags, "workflow_deletion_protection")
+	}
+	if g.RequiredEgressRulesAppInfraDryRun != nil && *g.RequiredEgressRulesAppInfraDryRun {
+		falseFlags = append(falseFlags, "required_egress_rules_app_infra_dry_run")
+	}
+	if g.RequiredIngressRulesAppInfraDryRun != nil && *g.RequiredIngressRulesAppInfraDryRun {
+		falseFlags = append(falseFlags, "required_ingress_rules_app_infra_dry_run")
 	}
 	projectDeletion = g.ProjectDeletionPolicy != "DELETE"
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Google LLC
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ terraform {
   required_version = ">= 0.13"
   required_providers {
     google = {
-      // version 6.26.0 and 6.27.0 removed because of the bug https://github.com/hashicorp/terraform-provider-google/issues/21950
+      // version 6.26.0 removed because of the bug https://github.com/hashicorp/terraform-provider-google/issues/21950
       source  = "hashicorp/google"
       version = ">= 3.50, != 6.26.0, != 6.27.0, < 8.0"
     }
     google-beta = {
-      // version 6.26.0 and 6.27.0 removed because of the bug https://github.com/hashicorp/terraform-provider-google/issues/21950
+      // version 6.26.0 removed because of the bug https://github.com/hashicorp/terraform-provider-google/issues/21950
       source  = "hashicorp/google-beta"
       version = ">= 3.50, != 6.26.0, != 6.27.0, < 8.0"
     }
@@ -33,10 +33,10 @@ terraform {
   }
 
   provider_meta "google" {
-    module_name = "blueprints/terraform/terraform-example-foundation:shared_vpc/v6.0.0"
+    module_name = "blueprints/terraform/terraform-example-foundation:restricted_shared_vpc/v6.0.0"
   }
 
   provider_meta "google-beta" {
-    module_name = "blueprints/terraform/terraform-example-foundation:shared_vpc/v6.0.0"
+    module_name = "blueprints/terraform/terraform-example-foundation:restricted_shared_vpc/v6.0.0"
   }
 }

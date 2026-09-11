@@ -148,6 +148,50 @@ Set the variables in **terraform.tfvars** (`groups` block) to use the specific g
      gcloud services enable servicenetworking.googleapis.com
      ```
 
+### Validate IAM permissions (`iam-validate`)
+
+Before running `terraform plan` or `apply`, you can verify that the principal authenticated with [Application Default Credentials (ADC)](https://cloud.google.com/docs/authentication/application-default-credentials) has the IAM permissions required for bootstrap. The standalone CLI at [`helpers/foundation-deployer/cmd/iam-validate`](../helpers/foundation-deployer/cmd/iam-validate) uses the same `TestIamPermissions` checks as the [foundation-deployer](../helpers/foundation-deployer/README.md) `-v` flag.
+
+The tool checks permissions on:
+
+- **Organization** (`organizations/<ORG_ID>`)
+- **Parent folder** (`folders/<FOLDER_ID>`), when `parent_folder` or `parent_folder_id` is set
+- **Billing account** (`billingAccounts/<BILLING_ACCOUNT_ID>`)
+
+**Prerequisites:** [Go](https://go.dev/dl/) installed, ADC configured (for example `gcloud auth application-default login`), and the APIs listed in the previous section enabled.
+
+Create a minimal `.tfvars` file with only the values needed for this check (you do not need the full `terraform.tfvars` for bootstrap):
+
+```hcl
+org_id               = "YOUR_ORG_ID"
+billing_account      = "XXXXXX-XXXXXX-XXXXXX"
+parent_folder_id     = "YOUR_FOLDER_ID"  # or parent_folder
+foundation_code_path = "/absolute/path/to/terraform-example-foundation"
+```
+
+`foundation_code_path` is used to locate the bundled permissions list at `helpers/foundation-deployer/examples/iam/default-permissions.yaml`. Alternatively, pass an absolute path with `-permissions_yaml`.
+
+From the repository root:
+
+```bash
+cd helpers/foundation-deployer
+go run ./cmd/iam-validate -tfvars_file /absolute/path/to/minimal.tfvars
+```
+
+Verbose output (allowed and missing permissions):
+
+```bash
+go run ./cmd/iam-validate -tfvars_file /absolute/path/to/minimal.tfvars -v
+```
+
+Custom permissions list:
+
+```bash
+go run ./cmd/iam-validate -tfvars_file /absolute/path/to/minimal.tfvars -permissions_yaml /absolute/path/to/permissions.yaml
+```
+
+If any required permission is missing, the command exits with a non-zero status and prints the missing permissions for the current ADC principal.
+
 ### Optional - Automatic creation of Google Cloud Identity groups
 
 In the foundation, Google Cloud Identity groups are used for [authentication and access management](https://cloud.google.com/architecture/security-foundations/authentication-authorization) .
@@ -222,18 +266,6 @@ The following steps introduce the steps to deploy with Cloud Build Alternatively
    terraform init
    terraform plan -input=false -out bootstrap.tfplan
    ```
-
-1. To  validate your policies, run `gcloud beta terraform vet`. For installation instructions, see [Install Google Cloud CLI](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install).
-
-1. Run the following commands and check for violations:
-
-   ```bash
-   export VET_PROJECT_ID=A-VALID-PROJECT-ID
-   terraform show -json bootstrap.tfplan > bootstrap.json
-   gcloud beta terraform vet bootstrap.json --policy-library="../policy-library" --project ${VET_PROJECT_ID}
-   ```
-
-   *`A-VALID-PROJECT-ID`* must be an existing project you have access to. This is necessary because `gcloud beta terraform vet` needs to link resources to a valid Google Cloud Platform project.
 
 1. Run `terraform apply`.
 
@@ -424,19 +456,7 @@ The following steps will guide you through deploying without using Cloud Build.
    cd ../gcp-bootstrap
    ```
 
-1. To  validate your policies, run `gcloud beta terraform vet`. For installation instructions, see [Install Google Cloud CLI](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install).
-
-1. Run the following commands and check for violations:
-
-   ```bash
-   export VET_PROJECT_ID=A-VALID-PROJECT-ID
-   terraform show -json bootstrap.tfplan > bootstrap.json
-   gcloud beta terraform vet bootstrap.json --policy-library="$(pwd)/../gcp-policies" --project ${VET_PROJECT_ID}
-   ```
-
-   *`A-VALID-PROJECT-ID`* must be an existing project you have access to. This is necessary because `gcloud beta terraform vet` needs to link resources to a valid Google Cloud Platform project.
-
-1. Commit validated code in plan branch.
+1. Commit the code in plan branch.
 
    ```bash
    git add .
@@ -507,6 +527,7 @@ The following steps will guide you through deploying without using Cloud Build.
 | bucket\_force\_destroy | When deleting a bucket, this boolean option will delete all contained objects. If false, Terraform will fail to delete buckets which contain objects. | `bool` | `false` | no |
 | bucket\_prefix | Name prefix to use for state bucket created. | `string` | `"bkt"` | no |
 | bucket\_tfstate\_kms\_force\_destroy | When deleting a bucket, this boolean option will delete the KMS keys used for the Terraform state bucket. | `bool` | `false` | no |
+| cloud\_builder\_sleep\_duration | The duration to wait for Cloud Builder and CSR repo resources to initialize (e.g., 30s, 2m). | `string` | `"30s"` | no |
 | default\_region | Default region to create resources where applicable. | `string` | `"us-central1"` | no |
 | default\_region\_2 | Secondary default region to create resources where applicable. | `string` | `"us-west1"` | no |
 | default\_region\_gcs | Case-Sensitive default region to create gcs resources where applicable. | `string` | `"US"` | no |
@@ -533,6 +554,7 @@ The following steps will guide you through deploying without using Cloud Build.
 | cloud\_build\_worker\_range\_id | The Cloud Build private worker IP range ID. |
 | cloud\_builder\_artifact\_repo | Artifact Registry (AR) Repository created to store TF Cloud Builder images. |
 | cloudbuild\_project\_id | Project where Cloud Build configuration and terraform container image will reside. |
+| cloudbuild\_project\_number | Project number of the Cloud Build project |
 | common\_config | Common configuration data to be used in other steps. |
 | csr\_repos | List of Cloud Source Repos created by the module, linked to Cloud Build triggers. |
 | environment\_step\_terraform\_service\_account\_email | Environment Step Terraform Account |
@@ -542,9 +564,11 @@ The following steps will guide you through deploying without using Cloud Build.
 | networks\_step\_terraform\_service\_account\_email | Networks Step Terraform Account |
 | optional\_groups | List of Google Groups created that are optional to the Example Foundation steps. |
 | organization\_step\_terraform\_service\_account\_email | Organization Step Terraform Account |
+| parent\_id | Parent ID service account. |
 | projects\_gcs\_bucket\_tfstate | Bucket used for storing terraform state for stage 4-projects foundations pipelines in seed project. |
 | projects\_step\_terraform\_service\_account\_email | Projects Step Terraform Account |
 | required\_groups | List of Google Groups created that are required by the Example Foundation steps. |
 | seed\_project\_id | Project where service accounts and core APIs will be enabled. |
+| seed\_project\_number | The seed project number. |
 
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

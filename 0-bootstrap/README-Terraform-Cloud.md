@@ -15,7 +15,6 @@ Note: If you choose to use [Terraform Cloud with Agents](https://developer.hashi
 To run the instructions described in this document, install the following:
 
 - [Google Cloud SDK](https://cloud.google.com/sdk/install) version 393.0.0 or later
-    - [terraform-tools](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) component
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) version 2.28.0 or later
 - [Terraform](https://www.terraform.io/downloads.html) version 1.5.7 or later
 - [jq](https://jqlang.github.io/jq/download/) version 1.6.0 or later
@@ -464,12 +463,11 @@ or go to [Deploying step 3-networks-hub-and-spoke](#deploying-step-3-networks-hu
    chmod 755 ./tf-wrapper.sh
    ```
 
-1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, rename `production.auto.example.tfvars` to `production.auto.tfvars` and rename `access_context.auto.example.tfvars` to `access_context.auto.tfvars`.
+1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, and rename `production.auto.example.tfvars` to `production.auto.tfvars`.
 
    ```bash
    mv common.auto.example.tfvars common.auto.tfvars
    mv production.auto.example.tfvars production.auto.tfvars
-   mv access_context.auto.example.tfvars access_context.auto.tfvars
    ```
 
 1. Update the file `production.auto.tfvars` with the values for the `target_name_server_addresses`.
@@ -524,13 +522,6 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    ```bash
    ./tf-wrapper.sh init shared
    ./tf-wrapper.sh plan shared
-   ```
-
-1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
-1. Run `validate` and check for violations.
-
-   ```bash
-   ./tf-wrapper.sh validate shared $(pwd)/policy-library ${CICD_PROJECT_ID}
    ```
 
 1. Run `apply` shared.
@@ -627,12 +618,11 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    chmod 755 ./tf-wrapper.sh
    ```
 
-1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, rename `shared.auto.example.tfvars` to `shared.auto.tfvars` and rename `access_context.auto.example.tfvars` to `access_context.auto.tfvars`.
+1. Rename `common.auto.example.tfvars` to `common.auto.tfvars`, and rename `shared.auto.example.tfvars` to `shared.auto.tfvars`.
 
    ```bash
    mv common.auto.example.tfvars common.auto.tfvars
    mv shared.auto.example.tfvars shared.auto.tfvars
-   mv access_context.auto.example.tfvars access_context.auto.tfvars
    ```
 
 1. Update `common.auto.tfvars` file with values from your GCP environment.
@@ -675,13 +665,6 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    ```bash
    ./tf-wrapper.sh init shared
    ./tf-wrapper.sh plan shared
-   ```
-
-1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
-1. Run `validate` and check for violations.
-
-   ```bash
-   ./tf-wrapper.sh validate shared $(pwd)/policy-library ${CICD_PROJECT_ID}
    ```
 
 1. Run `apply` shared.
@@ -828,13 +811,6 @@ An environment variable `GOOGLE_IMPERSONATE_SERVICE_ACCOUNT` will be set with th
    ```bash
    ./tf-wrapper.sh init shared
    ./tf-wrapper.sh plan shared
-   ```
-
-1. To use the `validate` option of the `tf-wrapper.sh` script, please follow the [instructions](https://cloud.google.com/docs/terraform/policy-validation/validate-policies#install) to install the terraform-tools component.
-1. Run `validate` and check for violations.
-
-   ```bash
-   ./tf-wrapper.sh validate shared $(pwd)/policy-library ${CICD_PROJECT_ID}
    ```
 
 1. Run `apply` shared.
