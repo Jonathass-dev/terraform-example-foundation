@@ -85,3 +85,5 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 )
+
+replace github.com/terraform-google-modules/terraform-example-foundation/test/integration => ../../test/integration
