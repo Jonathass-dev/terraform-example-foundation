@@ -39,8 +39,13 @@ module "peering_gce_instance" {
   remote_state_bucket = var.remote_state_bucket
 }
 
+locals {
+  enable_confidential_space = try(data.terraform_remote_state.projects_env.outputs.confidential_space_project, "") != ""
+}
+
 module "confidential_space" {
   source = "../../modules/confidential_space"
+  count  = local.enable_confidential_space ? 1 : 0
 
   environment                              = local.environment
   confidential_image_digest                = var.confidential_image_digest
