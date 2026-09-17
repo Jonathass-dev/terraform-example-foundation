@@ -15,8 +15,9 @@
  */
 
 locals {
-  business_unit = "business_unit_1"
-  environment   = "production"
+  business_unit             = "business_unit_1"
+  environment               = "production"
+  enable_confidential_space = try(data.terraform_remote_state.projects_env.outputs.confidential_space_project, "") != ""
 }
 
 module "gce_instance" {
@@ -37,10 +38,6 @@ module "peering_gce_instance" {
   project_suffix      = "sample-peering"
   region              = coalesce(var.instance_region, local.default_region)
   remote_state_bucket = var.remote_state_bucket
-}
-
-locals {
-  enable_confidential_space = try(data.terraform_remote_state.projects_env.outputs.confidential_space_project, "") != ""
 }
 
 module "confidential_space" {
