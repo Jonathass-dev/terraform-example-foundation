@@ -30,22 +30,6 @@ const (
 // the no-CI/CD variant (no Cloud Source Repositories, no Cloud Build) before applying.
 var AllowedBuildTypes = []string{"cb", "github", "gitlab", "terraform_cloud", "local"}
 
-// CurrentBuildType returns the build type currently active in basePath, detected
-// by the active build_<type>.tf file (i.e. without the .example suffix). It returns
-// an empty string if no build type is active.
-func CurrentBuildType(basePath string) (string, error) {
-	for _, bt := range AllowedBuildTypes {
-		active, err := FileExists(filepath.Join(basePath, fmt.Sprintf("build_%s.tf", bt)))
-		if err != nil {
-			return "", err
-		}
-		if active {
-			return bt, nil
-		}
-	}
-	return "", nil
-}
-
 // RenameBuildFiles activates the targetBuild variant in basePath and deactivates
 // every other variant, by renaming *_<type>.tf <-> *_<type>.tf.example.
 func RenameBuildFiles(basePath, targetBuild string) error {
